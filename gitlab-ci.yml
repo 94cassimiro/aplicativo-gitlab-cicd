@@ -1,0 +1,39 @@
+stages:
+  - realizar_testes
+  - build_imagens
+  - deploy_dev
+
+# Etapa 1: Realizar Testes
+realizar_testes:
+  stage: realizar_testes
+  image: ruby:3.1
+  script:
+    - echo "Iniciando os testes..."
+    - bundle install  # Instalar dependências, caso tenha um Gemfile
+    - bundle exec rspec  # Supondo que você tenha testes em Ruby (RSPEC, por exemplo)
+  only:
+    - master  # Apenas executa esta etapa quando a branch for a 'master'
+
+# Etapa 2: Build da Imagem Docker
+build_imagens:
+  stage: build_imagens
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - echo "Construindo a imagem Docker..."
+    - docker build -t myapp:latest .  # Cria a imagem Docker do seu aplicativo
+    - docker images  # Lista as imagens para garantir que a imagem foi criada
+  only:
+    - master  # Apenas executa esta etapa quando a branch for a 'master'
+
+# Etapa 3: Deploy para o Ambiente de Desenvolvimento
+deploy_dev:
+  stage: deploy_dev
+  image: google/cloud-sdk:latest  # Usando a imagem do Google Cloud SDK para deploy
+  script:
+    - echo "Iniciando o deploy para o ambiente de desenvolvimento..."
+    - kubectl apply -f k8s/deployment.yaml  # Supondo que você tenha um arquivo de deployment Kubernetes
+    - kubectl set image deployment/myapp myapp=myapp:latest  # Atualiza o pod com a nova imagem
+  only:
+    - master  # Apenas executa esta etapa quando a branch for a 'master'
